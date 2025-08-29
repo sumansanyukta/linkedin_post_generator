@@ -2,6 +2,22 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/sumansanyukta/linkedin_post_generator#readme",
+  "bugs": {
+    "url": "https://github.com/sumansanyukta/linkedin_post_generator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumansanyukta/linkedin_post_generator.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
@@ -54,9 +70,9 @@
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "latest",
-    "react": "^18.3.1",
+    "react": "^19",
     "react-day-picker": "9.8.0",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19",
     "react-hook-form": "^7.60.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.4",
@@ -78,21 +94,5 @@
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
-  },
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sumansanyukta/linkedin_post_generator.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/sumansanyukta/linkedin_post_generator/issues"
-  },
-  "homepage": "https://github.com/sumansanyukta/linkedin_post_generator#readme"
+  }
 }

@@ -233,6 +233,10 @@ export default function LinkedInPostGenerator() {
       })
       const titlesData = await titlesResponse.json()
 
+      if (titlesData.error) {
+        throw new Error(`Titles API error: ${titlesData.error}`)
+      }
+
       if (!titlesData || !titlesData.titles || !Array.isArray(titlesData.titles) || titlesData.titles.length === 0) {
         throw new Error("Invalid titles response")
       }
@@ -248,6 +252,10 @@ export default function LinkedInPostGenerator() {
       })
       const bodyData = await bodyResponse.json()
 
+      if (bodyData.error) {
+        throw new Error(`Body API error: ${bodyData.error}`)
+      }
+
       if (!bodyData || !bodyData.body) {
         throw new Error("Invalid body response")
       }
@@ -262,6 +270,10 @@ export default function LinkedInPostGenerator() {
       })
       const ctaData = await ctaResponse.json()
 
+      if (ctaData.error) {
+        throw new Error(`CTA API error: ${ctaData.error}`)
+      }
+
       if (!ctaData || !ctaData.cta) {
         throw new Error("Invalid CTA response")
       }
@@ -275,6 +287,10 @@ export default function LinkedInPostGenerator() {
         }),
       })
       const hashtagsData = await hashtagsResponse.json()
+
+      if (hashtagsData.error) {
+        throw new Error(`Hashtags API error: ${hashtagsData.error}`)
+      }
 
       if (!hashtagsData || !hashtagsData.hashtags || !Array.isArray(hashtagsData.hashtags)) {
         throw new Error("Invalid hashtags response")
@@ -292,6 +308,7 @@ export default function LinkedInPostGenerator() {
       setCurrentStep(4)
     } catch (error) {
       console.error("Error generating content:", error)
+      console.log("[v0] Using fallback content due to error:", error.message)
       setGeneratedContent({
         titles: [
           `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,

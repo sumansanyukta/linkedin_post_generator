@@ -24,14 +24,30 @@ Category: ${category}
 Return the response as a JSON object with this exact format:
 {
   "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"]
-}`
+}
+
+Do not include any extra text or markdown formatting like \`\`\`json.`
 
     const result = await model.generateContent(prompt)
     const response = await result.response
-    const text = response.text()
+    let text = response.text()
+
+    // Remove markdown code fences if present
+    text = text.replace(/```json\s*/g, "").replace(/```\s*/g, "")
+
+    // Find the JSON object boundaries
+    const jsonStart = text.indexOf("{")
+    const jsonEnd = text.lastIndexOf("}") + 1
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      text = text.substring(jsonStart, jsonEnd)
+    }
 
     // Parse the JSON response
     const parsedResponse = JSON.parse(text)
+
+    if (!parsedResponse.hashtags || !Array.isArray(parsedResponse.hashtags)) {
+      throw new Error("Invalid response format from AI")
+    }
 
     // Add # symbol to each hashtag
     const formattedHashtags = parsedResponse.hashtags.map((tag: string) => (tag.startsWith("#") ? tag : `#${tag}`))
