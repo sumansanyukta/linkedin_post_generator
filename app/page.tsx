@@ -18,6 +18,12 @@ interface TechArticle {
   }
 }
 
+interface CustomUrlContent {
+  title: string
+  description: string
+  url: string
+}
+
 interface GeneratedContent {
   titles: string[]
   selectedTitle: string
@@ -96,6 +102,10 @@ export default function LinkedInPostGenerator() {
   const [techArticles, setTechArticles] = useState<TechArticle[]>([])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
   const [articlesError, setArticlesError] = useState("")
+  const [customUrl, setCustomUrl] = useState("")
+  const [isLoadingCustomUrl, setIsLoadingCustomUrl] = useState(false)
+  const [customUrlError, setCustomUrlError] = useState("")
+  const [customUrlContent, setCustomUrlContent] = useState<CustomUrlContent | null>(null)
   const [newHashtag, setNewHashtag] = useState("")
   const [isRegeneratingHashtags, setIsRegeneratingHashtags] = useState(false)
   const [selectedThumbnailTemplate, setSelectedThumbnailTemplate] = useState("")
@@ -144,6 +154,46 @@ export default function LinkedInPostGenerator() {
     }
   }
 
+  const fetchCustomUrlContent = async () => {
+    if (!customUrl.trim()) return
+
+    setIsLoadingCustomUrl(true)
+    setCustomUrlError("")
+    console.log("[v0] Fetching content from custom URL:", customUrl)
+
+    try {
+      const response = await fetch("/api/extract-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: customUrl }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("[v0] Custom URL content extracted:", data)
+
+      if (data.title && data.description) {
+        setCustomUrlContent({
+          title: data.title,
+          description: data.description,
+          url: customUrl,
+        })
+        setCustomUrlError("")
+      } else {
+        throw new Error("Failed to extract content from URL")
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching custom URL content:", error)
+      setCustomUrlError("Failed to extract content from URL. Please check the URL and try again.")
+      setCustomUrlContent(null)
+    } finally {
+      setIsLoadingCustomUrl(false)
+    }
+  }
+
   const filteredArticles = techArticles.filter((article) => {
     const matchesSearch =
       article.title.toLowerCase().includes(topicSearch.toLowerCase()) ||
@@ -160,7 +210,7 @@ export default function LinkedInPostGenerator() {
     { id: 6, name: "Final Post", icon: ImageIcon },
   ]
 
-  const handleTopicSelect = (articleTitle: string) => {
+  const handleTopicSelect = (articleTitle: string, isCustom = false) => {
     setSelectedTopic(articleTitle)
     setCurrentStep(2)
   }
@@ -415,9 +465,66 @@ export default function LinkedInPostGenerator() {
                 <TrendingUp className="w-5 h-5" />
                 Select Tech News Topic
               </CardTitle>
-              <CardDescription>Choose from the latest tech news articles for your LinkedIn post</CardDescription>
+              <CardDescription>Choose from the latest tech news articles or provide your own URL</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-3">Or, enter a custom URL</h3>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="https://example.com/article"
+                    value={customUrl}
+                    onChange={(e) => setCustomUrl(e.target.value)}
+                    className="flex-1"
+                    disabled={isLoadingCustomUrl}
+                  />
+                  <Button
+                    onClick={fetchCustomUrlContent}
+                    disabled={!customUrl.trim() || isLoadingCustomUrl}
+                    className="flex items-center gap-2"
+                  >
+                    {isLoadingCustomUrl ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Fetching...
+                      </>
+                    ) : (
+                      "Fetch"
+                    )}
+                  </Button>
+                </div>
+
+                {isLoadingCustomUrl && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    <span className="text-blue-700">Fetching content...</span>
+                  </div>
+                )}
+
+                {customUrlError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-600 text-sm">{customUrlError}</p>
+                  </div>
+                )}
+
+                {customUrlContent && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-auto p-4 text-left justify-start bg-white hover:bg-blue-50 border-2 hover:border-blue-300 transition-all"
+                    onClick={() => handleTopicSelect(customUrlContent.title, true)}
+                  >
+                    <div className="w-full space-y-2">
+                      <h4 className="font-bold text-gray-900 text-balance leading-tight">{customUrlContent.title}</h4>
+                      <p className="text-sm text-gray-600 text-pretty line-clamp-3">{customUrlContent.description}</p>
+                      <div className="text-xs text-gray-500">
+                        <span className="font-medium">Source: </span>
+                        {customUrlContent.url}
+                      </div>
+                    </div>
+                  </Button>
+                )}
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
