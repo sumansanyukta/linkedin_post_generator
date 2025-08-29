@@ -1,40 +1,34 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { type NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, category } = await request.json()
+    const { titlePrompt } = await request.json();
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-    const prompt = `Generate exactly 3 compelling LinkedIn post titles for the topic "${topic}" in the "${category}" category. 
+    const prompt = `Generate a short and compelling Title for a LinkedIn post based on the following content: "${titlePrompt}". The CTA should be a single phrase, less than 15 words, and should encourage engagement (e.g., "Learn more," "Leave a comment," "Tag a friend").
 
-Guidelines:
-- Make them attention-grabbing and professional
-- Include numbers or specific benefits when possible
-- Keep them under 100 characters
-- Make them suitable for LinkedIn's professional audience
-- Vary the style (question, list, statement)
+Return the response as a valid JSON object with a single key "cta", which is a string. Do not include any extra text or markdown formatting like \`\`\`json.`;
 
-Topic: ${topic}
-Category: ${category}
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
 
-Return the response as a JSON object with this exact format:
-{
-  "titles": ["title1", "title2", "title3"]
-}`
-
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    // Clean the string by removing Markdown code fences
+    const jsonStart = text.indexOf('{');
+    const jsonEnd = text.lastIndexOf('}') + 1;
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      text = text.substring(jsonStart, jsonEnd);
+    }
 
     // Parse the JSON response
-    const parsedResponse = JSON.parse(text)
+    const parsedResponse = JSON.parse(text);
 
-    return NextResponse.json({ titles: parsedResponse.titles })
+    return NextResponse.json({ cta: parsedResponse.cta });
   } catch (error) {
-    console.error("Error generating titles:", error)
-    return NextResponse.json({ error: "Failed to generate titles" }, { status: 500 })
+    console.error("Error generating Title:", error);
+    return NextResponse.json({ error: "Failed to generate Title." }, { status: 500 });
   }
 }
