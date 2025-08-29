@@ -442,7 +442,7 @@ export default function LinkedInPostGenerator() {
               {isLoadingArticles && (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin mr-2" />
-                  <span>Loading latest tech news...</span>
+                  <span>Fetching latest topics...</span>
                 </div>
               )}
 
