@@ -455,26 +455,59 @@ export default function LinkedInPostGenerator() {
                 </div>
               )}
 
-              {!isLoadingArticles && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredArticles.map((article, index) => (
+              {!isLoadingArticles && filteredArticles.length > 0 && (
+                <>
+                  <div className="mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-6 h-6 text-blue-600" />
+                      Top Story
+                    </h3>
                     <Button
-                      key={index}
                       variant="outline"
-                      className="h-auto p-4 text-left justify-start bg-white hover:bg-blue-50 border-2 hover:border-blue-200 transition-all"
-                      onClick={() => handleTopicSelect(article.title)}
+                      className="w-full h-auto p-6 text-left justify-start bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 hover:border-blue-300 transition-all"
+                      onClick={() => handleTopicSelect(filteredArticles[0].title)}
                     >
-                      <div className="w-full space-y-2">
-                        <h3 className="font-bold text-gray-900 text-balance leading-tight">{article.title}</h3>
-                        <p className="text-sm text-gray-600 text-pretty line-clamp-2">{article.description}</p>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{article.source.name}</span>
-                          <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                      <div className="w-full space-y-3">
+                        <h4 className="text-xl font-bold text-gray-900 text-balance leading-tight">
+                          {filteredArticles[0].title}
+                        </h4>
+                        <p className="text-base text-gray-700 text-pretty line-clamp-3">
+                          {filteredArticles[0].description}
+                        </p>
+                        <div className="flex items-center justify-between text-sm text-gray-600">
+                          <span className="font-medium">{filteredArticles[0].source.name}</span>
+                          <span>{new Date(filteredArticles[0].publishedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </Button>
-                  ))}
-                </div>
+                  </div>
+
+                  {filteredArticles.length > 1 && (
+                    <>
+                      <div className="border-t border-gray-200 my-6"></div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">More Articles</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {filteredArticles.slice(1).map((article, index) => (
+                          <Button
+                            key={index + 1}
+                            variant="outline"
+                            className="h-auto p-4 text-left justify-start bg-white hover:bg-blue-50 border-2 hover:border-blue-200 transition-all"
+                            onClick={() => handleTopicSelect(article.title)}
+                          >
+                            <div className="w-full space-y-2">
+                              <h3 className="font-bold text-gray-900 text-balance leading-tight">{article.title}</h3>
+                              <p className="text-sm text-gray-600 text-pretty line-clamp-2">{article.description}</p>
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>{article.source.name}</span>
+                                <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
               )}
 
               {!isLoadingArticles && filteredArticles.length === 0 && !articlesError && (

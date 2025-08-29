@@ -1,11 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { groq } from "@ai-sdk/groq"
+import { createGroq } from "@ai-sdk/groq"
 import { generateObject } from "ai"
 import { z } from "zod"
 
 export async function POST(request: NextRequest) {
   try {
     const { topic, category } = await request.json()
+
+    const groq = createGroq({
+      apiKey: process.env.GROQ_API_KEY,
+    })
 
     const { object } = await generateObject({
       model: groq("llama-3.3-70b-versatile"),

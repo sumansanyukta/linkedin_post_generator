@@ -87,11 +87,11 @@ export async function GET() {
   try {
     console.log("[v0] Attempting to fetch from NewsAPI.org")
 
-    const queries = ["artificial intelligence", "machine learning", "data science"]
-    const randomQuery = queries[Math.floor(Math.random() * queries.length)]
+    const searchQuery = "data science OR machine learning OR artificial intelligence"
+    const domains = "techcrunch.com,wired.com,arstechnica.com,mit.edu,nature.com,ieee.org"
 
     const response = await fetch(
-      `https://newsapi.org/v2/everything?q=${encodeURIComponent(randomQuery)}&sortBy=publishedAt&pageSize=10&language=en&apiKey=da29a9b5988943359e808d0b49096304`,
+      `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&domains=${domains}&sortBy=publishedAt&pageSize=10&language=en&apiKey=da29a9b5988943359e808d0b49096304`,
       {
         headers: {
           "User-Agent": "LinkedInPostGenerator/1.0",
