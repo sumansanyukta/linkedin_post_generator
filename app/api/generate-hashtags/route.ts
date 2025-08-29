@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { topic, category } = await request.json()
 
     const { object } = await generateObject({
-      model: groq("llama-3.1-70b-versatile"),
+      model: groq("llama-3.3-70b-versatile"),
       schema: z.object({
         hashtags: z.array(z.string()).min(5).max(10).describe("Relevant hashtags for LinkedIn post"),
       }),

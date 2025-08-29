@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { topic, category } = await request.json()
 
     const { object } = await generateObject({
-      model: groq("llama-3.1-70b-versatile"),
+      model: groq("llama-3.3-70b-versatile"),
       schema: z.object({
         cta: z.string().describe("A compelling call-to-action for LinkedIn engagement"),
       }),

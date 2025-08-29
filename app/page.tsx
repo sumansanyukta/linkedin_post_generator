@@ -1,61 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Loader2, Sparkles, TrendingUp, Hash, ImageIcon, Search, Star, Plus, X, RefreshCw, Copy } from "lucide-react"
+import { Loader2, Sparkles, TrendingUp, Hash, ImageIcon, Search, Plus, X, RefreshCw, Copy } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
-const TRENDING_TOPICS = [
-  { name: "AI & Machine Learning", popularity: 95, category: "Technology", trending: true },
-  { name: "Remote Work", popularity: 88, category: "Workplace", trending: true },
-  { name: "Startup Growth", popularity: 82, category: "Business", trending: false },
-  { name: "Digital Marketing", popularity: 90, category: "Marketing", trending: true },
-  { name: "Leadership", popularity: 85, category: "Professional", trending: false },
-  { name: "Tech Innovation", popularity: 92, category: "Technology", trending: true },
-  { name: "Career Development", popularity: 87, category: "Professional", trending: false },
-  { name: "Productivity", popularity: 80, category: "Lifestyle", trending: false },
-  { name: "Industry Insights", popularity: 75, category: "Business", trending: false },
-  { name: "Personal Branding", popularity: 83, category: "Marketing", trending: false },
-  { name: "Cybersecurity", popularity: 89, category: "Technology", trending: true },
-  { name: "Sustainability", popularity: 78, category: "Environment", trending: false },
-  { name: "Data Analytics", popularity: 86, category: "Technology", trending: false },
-  { name: "Mental Health", popularity: 84, category: "Wellness", trending: false },
-  { name: "Blockchain", popularity: 77, category: "Technology", trending: false },
-]
-
-const POST_CATEGORIES = [
-  {
-    name: "One Slide Wisdom",
-    description: "Share knowledge and teach your audience",
-    engagement: "High",
-    icon: "📚",
-    examples: ["How-to guides", "Industry insights", "Best practices"],
-  },
-  {
-    name: "Code Snippet of the week",
-    description: "Motivate and inspire your network",
-    engagement: "Very High",
-    icon: "✨",
-    examples: ["Success stories", "Motivational quotes", "Personal growth"],
-  },
-  {
-    name: "A week in data",
-    description: "Share latest developments and trends",
-    engagement: "Medium",
-    icon: "📰",
-    examples: ["Breaking news", "Market updates", "Company announcements"],
-  },
-  {
-    name: "One-Minute Metric",
-    description: "Celebrate successes",
-    engagement: "Medium",
-    icon: "🏆",
-    examples: ["Awards", "Certifications", "Company growth"],
-  },
-]
+interface TechArticle {
+  title: string
+  description: string
+  url: string
+  publishedAt: string
+  source: {
+    name: string
+  }
+}
 
 interface GeneratedContent {
   titles: string[]
@@ -95,14 +56,46 @@ const THUMBNAIL_TEMPLATES = [
   },
 ]
 
+const POST_CATEGORIES = [
+  {
+    name: "One Slide Wisdom",
+    description: "Share knowledge and teach your audience",
+    engagement: "High",
+    icon: "📚",
+    examples: ["How-to guides", "Industry insights", "Best practices"],
+  },
+  {
+    name: "Code Snippet of the week",
+    description: "Motivate and inspire your network",
+    engagement: "Very High",
+    icon: "✨",
+    examples: ["Success stories", "Motivational quotes", "Personal growth"],
+  },
+  {
+    name: "A week in data",
+    description: "Share latest developments and trends",
+    engagement: "Medium",
+    icon: "📰",
+    examples: ["Breaking news", "Market updates", "Company announcements"],
+  },
+  {
+    name: "One-Minute Metric",
+    description: "Celebrate successes",
+    engagement: "Medium",
+    icon: "🏆",
+    examples: ["Awards", "Certifications", "Company growth"],
+  },
+]
+
 export default function LinkedInPostGenerator() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [topicSearch, setTopicSearch] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [showTrendingOnly, setShowTrendingOnly] = useState(false)
+  const [techArticles, setTechArticles] = useState<TechArticle[]>([])
+  const [isLoadingArticles, setIsLoadingArticles] = useState(false)
+  const [articlesError, setArticlesError] = useState("")
   const [newHashtag, setNewHashtag] = useState("")
   const [isRegeneratingHashtags, setIsRegeneratingHashtags] = useState(false)
   const [selectedThumbnailTemplate, setSelectedThumbnailTemplate] = useState("")
@@ -115,12 +108,48 @@ export default function LinkedInPostGenerator() {
     customHashtags: [],
   })
 
-  const filteredTopics = TRENDING_TOPICS.filter((topic) => {
-    const matchesSearch = topic.name.toLowerCase().includes(topicSearch.toLowerCase())
-    const matchesCategory = categoryFilter === "all" || topic.category.toLowerCase() === categoryFilter.toLowerCase()
-    const matchesTrending = !showTrendingOnly || topic.trending
-    return matchesSearch && matchesCategory && matchesTrending
-  }).sort((a, b) => b.popularity - a.popularity)
+  useEffect(() => {
+    fetchTechNews()
+  }, [])
+
+  const fetchTechNews = async () => {
+    setIsLoadingArticles(true)
+    setArticlesError("")
+    console.log("[v0] Starting to fetch tech news")
+
+    try {
+      const response = await fetch("/api/tech-news")
+      console.log("[v0] Tech news API response status:", response.status)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("[v0] Tech news API response data:", data)
+
+      if (data.articles && Array.isArray(data.articles)) {
+        console.log("[v0] Successfully loaded", data.articles.length, "articles")
+        setTechArticles(data.articles)
+      } else {
+        console.log("[v0] Invalid response format:", data)
+        throw new Error("Invalid response format")
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching tech news:", error)
+      setArticlesError("Error fetching data")
+      setTechArticles([])
+    } finally {
+      setIsLoadingArticles(false)
+    }
+  }
+
+  const filteredArticles = techArticles.filter((article) => {
+    const matchesSearch =
+      article.title.toLowerCase().includes(topicSearch.toLowerCase()) ||
+      article.description.toLowerCase().includes(topicSearch.toLowerCase())
+    return matchesSearch
+  })
 
   const steps = [
     { id: 1, name: "Select Topic", icon: TrendingUp },
@@ -131,8 +160,8 @@ export default function LinkedInPostGenerator() {
     { id: 6, name: "Final Post", icon: ImageIcon },
   ]
 
-  const handleTopicSelect = (topicName: string) => {
-    setSelectedTopic(topicName)
+  const handleTopicSelect = (articleTitle: string) => {
+    setSelectedTopic(articleTitle)
     setCurrentStep(2)
   }
 
@@ -144,7 +173,6 @@ export default function LinkedInPostGenerator() {
   const generateContent = async () => {
     setIsGenerating(true)
     try {
-      // Generate titles
       const titlesResponse = await fetch("/api/generate-titles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,14 +187,13 @@ export default function LinkedInPostGenerator() {
         throw new Error("Invalid titles response")
       }
 
-      // Generate body content
       const bodyResponse = await fetch("/api/generate-body", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
           category: selectedCategory,
-          title: titlesData.titles[0], // Now safe to access
+          title: titlesData.titles[0],
         }),
       })
       const bodyData = await bodyResponse.json()
@@ -175,7 +202,6 @@ export default function LinkedInPostGenerator() {
         throw new Error("Invalid body response")
       }
 
-      // Generate CTA
       const ctaResponse = await fetch("/api/generate-cta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,7 +216,6 @@ export default function LinkedInPostGenerator() {
         throw new Error("Invalid CTA response")
       }
 
-      // Generate hashtags
       const hashtagsResponse = await fetch("/api/generate-hashtags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -217,7 +242,6 @@ export default function LinkedInPostGenerator() {
       setCurrentStep(4)
     } catch (error) {
       console.error("Error generating content:", error)
-      // Fallback to mock data if API fails
       setGeneratedContent({
         titles: [
           `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
@@ -301,7 +325,6 @@ export default function LinkedInPostGenerator() {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(formatFinalPost())
-      // You could add a toast notification here
     } catch (error) {
       console.error("Failed to copy to clipboard:", error)
     }
@@ -390,80 +413,74 @@ export default function LinkedInPostGenerator() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Select Trending Topic
+                Select Tech News Topic
               </CardTitle>
-              <CardDescription>Choose a trending topic for your LinkedIn post</CardDescription>
+              <CardDescription>Choose from the latest tech news articles for your LinkedIn post</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search topics..."
+                    placeholder="Search articles..."
                     value={topicSearch}
                     onChange={(e) => setTopicSearch(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md bg-white"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="technology">Technology</option>
-                  <option value="business">Business</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="professional">Professional</option>
-                  <option value="workplace">Workplace</option>
-                  <option value="lifestyle">Lifestyle</option>
-                  <option value="environment">Environment</option>
-                  <option value="wellness">Wellness</option>
-                </select>
                 <Button
-                  variant={showTrendingOnly ? "default" : "outline"}
-                  onClick={() => setShowTrendingOnly(!showTrendingOnly)}
-                  className="flex items-center gap-2"
+                  variant="outline"
+                  onClick={fetchTechNews}
+                  disabled={isLoadingArticles}
+                  className="flex items-center gap-2 bg-transparent"
                 >
-                  <TrendingUp className="w-4 h-4" />
-                  Trending Only
+                  <RefreshCw className={`w-4 h-4 ${isLoadingArticles ? "animate-spin" : ""}`} />
+                  Refresh
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredTopics.map((topic) => (
-                  <Button
-                    key={topic.name}
-                    variant="outline"
-                    className="h-auto p-4 text-left justify-start bg-white hover:bg-blue-50 border-2 hover:border-blue-200 transition-all"
-                    onClick={() => handleTopicSelect(topic.name)}
-                  >
-                    <div className="w-full">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-gray-900">{topic.name}</span>
-                        {topic.trending && (
-                          <Badge variant="destructive" className="text-xs">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            Hot
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{topic.category}</span>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span>{topic.popularity}%</span>
+              {isLoadingArticles && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin mr-2" />
+                  <span>Loading latest tech news...</span>
+                </div>
+              )}
+
+              {articlesError && (
+                <div className="text-center py-4">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-600 font-medium">Error fetching data</p>
+                    <p className="text-red-500 text-sm mt-1">Please try refreshing or check your connection</p>
+                  </div>
+                </div>
+              )}
+
+              {!isLoadingArticles && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredArticles.map((article, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="h-auto p-4 text-left justify-start bg-white hover:bg-blue-50 border-2 hover:border-blue-200 transition-all"
+                      onClick={() => handleTopicSelect(article.title)}
+                    >
+                      <div className="w-full space-y-2">
+                        <h3 className="font-bold text-gray-900 text-balance leading-tight">{article.title}</h3>
+                        <p className="text-sm text-gray-600 text-pretty line-clamp-2">{article.description}</p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{article.source.name}</span>
+                          <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
+                    </Button>
+                  ))}
+                </div>
+              )}
 
-              {filteredTopics.length === 0 && (
+              {!isLoadingArticles && filteredArticles.length === 0 && !articlesError && (
                 <div className="text-center py-8 text-gray-500">
                   <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>No topics found matching your criteria</p>
+                  <p>No articles found matching your search</p>
                 </div>
               )}
             </CardContent>
@@ -786,7 +803,6 @@ export default function LinkedInPostGenerator() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Post Content */}
                 <div className="space-y-4">
                   <div className="bg-white border rounded-lg p-6 space-y-4">
                     <h2 className="text-xl font-bold text-balance">{generatedContent.selectedTitle}</h2>
@@ -801,7 +817,6 @@ export default function LinkedInPostGenerator() {
                     </div>
                   </div>
 
-                  {/* Post Analytics */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-2">Post Insights</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -825,7 +840,6 @@ export default function LinkedInPostGenerator() {
                   </div>
                 </div>
 
-                {/* Thumbnail Preview */}
                 <div className="space-y-4">
                   {selectedThumbnailTemplate && (
                     <div>
@@ -844,7 +858,6 @@ export default function LinkedInPostGenerator() {
                     </div>
                   )}
 
-                  {/* Generation Summary */}
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 className="font-semibold text-green-900 mb-3">Generation Summary</h3>
                     <div className="space-y-2 text-sm">
@@ -875,7 +888,6 @@ export default function LinkedInPostGenerator() {
                     </div>
                   </div>
 
-                  {/* Best Practices Tips */}
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <h3 className="font-semibold text-yellow-900 mb-2">LinkedIn Best Practices</h3>
                     <ul className="text-sm text-yellow-800 space-y-1">
@@ -888,7 +900,6 @@ export default function LinkedInPostGenerator() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button className="flex-1" onClick={copyToClipboard}>
                   <Copy className="w-4 h-4 mr-2" />
@@ -905,7 +916,6 @@ export default function LinkedInPostGenerator() {
                 </Button>
               </div>
 
-              {/* Success Message */}
               <div className="text-center py-4">
                 <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full">
                   <Sparkles className="w-4 h-4" />

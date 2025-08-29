@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const { topic, category, title } = await request.json()
 
     const { text } = await generateText({
-      model: groq("llama-3.1-70b-versatile"),
+      model: groq("llama-3.3-70b-versatile"),
       prompt: `Write an engaging LinkedIn post body for the title "${title}" about "${topic}" in the "${category}" category.
 
       Guidelines:
