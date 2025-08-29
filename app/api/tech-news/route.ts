@@ -20,71 +20,12 @@ export async function GET() {
       publishedAt: new Date().toISOString(),
       source: { name: "Wired" },
     },
-    {
-      title: "Cybersecurity Trends for 2025",
-      description: "Latest threats and protection strategies for modern businesses in an increasingly connected world.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "Security Week" },
-    },
-    {
-      title: "Cloud Computing Evolution",
-      description: "How cloud infrastructure is adapting to new business needs and enabling digital transformation.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "AWS Blog" },
-    },
-    {
-      title: "Machine Learning in Healthcare",
-      description: "Revolutionary applications of ML in medical diagnosis and treatment, improving patient outcomes.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "MIT Technology Review" },
-    },
-    {
-      title: "Quantum Computing Breakthroughs",
-      description:
-        "Recent advances in quantum technology and their practical applications in solving complex problems.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "Nature" },
-    },
-    {
-      title: "5G Network Deployment Updates",
-      description: "Global progress on 5G infrastructure and its transformative impact on businesses and consumers.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "IEEE Spectrum" },
-    },
-    {
-      title: "Blockchain Beyond Cryptocurrency",
-      description:
-        "Innovative uses of blockchain technology in supply chain, healthcare, and digital identity management.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "Forbes" },
-    },
-    {
-      title: "Edge Computing Market Growth",
-      description: "How edge computing is changing data processing strategies and enabling real-time applications.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "Gartner" },
-    },
-    {
-      title: "Sustainable Tech Innovations",
-      description:
-        "Green technology solutions addressing climate change challenges and promoting environmental sustainability.",
-      url: "#",
-      publishedAt: new Date().toISOString(),
-      source: { name: "GreenTech Media" },
-    },
   ]
 
   try {
     console.log("[v0] Attempting to fetch RSS feed")
     // Using a free RSS feed service to get tech news without requiring API keys
-    const response = await fetch("https://feeds.feedburner.com/TechCrunch", {
+    const response = await fetch("https://newsapi.org/v2/top-headlines?q=technology&apiKey=da29a9b5988943359e808d0b49096304", {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; LinkedInPostGenerator/1.0)",
       },
