@@ -1,37 +1,40 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createGroq } from "@ai-sdk/groq"
-import { generateObject } from "ai"
-import { z } from "zod"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export async function POST(request: NextRequest) {
   try {
     const { topic, category } = await request.json()
 
-    const groq = createGroq({
-      apiKey: process.env.GROQ_API_KEY,
-    })
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
-    const { object } = await generateObject({
-      model: groq("llama-3.3-70b-versatile"),
-      schema: z.object({
-        hashtags: z.array(z.string()).min(5).max(10).describe("Relevant hashtags for LinkedIn post"),
-      }),
-      prompt: `Generate 5-10 relevant hashtags for a LinkedIn post about "${topic}" in the "${category}" category.
+    const prompt = `Generate 5-10 relevant hashtags for a LinkedIn post about "${topic}" in the "${category}" category.
 
-      Guidelines:
-      - Include a mix of popular and niche hashtags
-      - Make them relevant to the topic and category
-      - Include general LinkedIn hashtags like #LinkedIn, #Professional
-      - Don't include the # symbol in the response
-      - Focus on hashtags that will increase visibility
-      - Include industry-specific tags when relevant
-      
-      Topic: ${topic}
-      Category: ${category}`,
-    })
+Guidelines:
+- Include a mix of popular and niche hashtags
+- Make them relevant to the topic and category
+- Include general LinkedIn hashtags like #LinkedIn, #Professional
+- Don't include the # symbol in the response
+- Focus on hashtags that will increase visibility
+- Include industry-specific tags when relevant
+
+Topic: ${topic}
+Category: ${category}
+
+Return the response as a JSON object with this exact format:
+{
+  "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"]
+}`
+
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text()
+
+    // Parse the JSON response
+    const parsedResponse = JSON.parse(text)
 
     // Add # symbol to each hashtag
-    const formattedHashtags = object.hashtags.map((tag) => (tag.startsWith("#") ? tag : `#${tag}`))
+    const formattedHashtags = parsedResponse.hashtags.map((tag: string) => (tag.startsWith("#") ? tag : `#${tag}`))
 
     return NextResponse.json({ hashtags: formattedHashtags })
   } catch (error) {

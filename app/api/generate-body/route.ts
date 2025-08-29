@@ -1,32 +1,31 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createGroq } from "@ai-sdk/groq"
-import { generateText } from "ai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export async function POST(request: NextRequest) {
   try {
     const { topic, category, title } = await request.json()
 
-    const groq = createGroq({
-      apiKey: process.env.GROQ_API_KEY,
-    })
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
-    const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
-      prompt: `Write an engaging LinkedIn post body for the title "${title}" about "${topic}" in the "${category}" category.
+    const prompt = `Write an engaging LinkedIn post body for the title "${title}" about "${topic}" in the "${category}" category.
 
-      Guidelines:
-      - Write in first person, professional but conversational tone
-      - Include 3-5 key points with emojis as bullet points
-      - Keep it between 150-300 words
-      - Add a question at the end to encourage engagement
-      - Use line breaks for readability
-      - Make it valuable and actionable for LinkedIn audience
-      - Include personal insights or experiences when appropriate
-      
-      Title: ${title}
-      Topic: ${topic}
-      Category: ${category}`,
-    })
+Guidelines:
+- Write in first person, professional but conversational tone
+- Include 3-5 key points with emojis as bullet points
+- Keep it between 150-300 words
+- Add a question at the end to encourage engagement
+- Use line breaks for readability
+- Make it valuable and actionable for LinkedIn audience
+- Include personal insights or experiences when appropriate
+
+Title: ${title}
+Topic: ${topic}
+Category: ${category}`
+
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text()
 
     return NextResponse.json({ body: text })
   } catch (error) {
