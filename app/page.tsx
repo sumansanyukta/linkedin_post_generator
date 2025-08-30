@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Loader2, Sparkles, TrendingUp, Hash, ImageIcon, Search, Plus, X, RefreshCw, Copy } from "lucide-react"
-import { Textarea } from "@/components/ui/textarea"
 
 interface TechArticle {
   title: string
@@ -95,8 +94,9 @@ const POST_CATEGORIES = [
 
 export default function LinkedInPostGenerator() {
   const [currentStep, setCurrentStep] = useState(1)
+  const [hasGeneratedContent, setHasGeneratedContent] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [selectedTopic, setSelectedTopic] = useState("")
+  const [isCategorySelectedForGeneration, setIsCategorySelectedForGeneration] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("One Slide Wisdom") // Set default category
   const [topicSearch, setTopicSearch] = useState("")
   const [techArticles, setTechArticles] = useState<TechArticle[]>([])
@@ -118,6 +118,7 @@ export default function LinkedInPostGenerator() {
     hashtags: [],
     customHashtags: [],
   })
+  const [selectedTopic, setSelectedTopic] = useState("") // Declare selectedTopic variable
 
   useEffect(() => {
     fetchTechNews()
@@ -212,7 +213,17 @@ export default function LinkedInPostGenerator() {
 
   const handleTopicSelect = (articleTitle: string, isCustom = false) => {
     setSelectedTopic(articleTitle)
-    setCurrentStep(2) // Skip category selection, go directly to content generation
+    setCurrentStep(2)
+    // Reset generation-related state for a clean flow
+    setHasGeneratedContent(false)
+    setIsCategorySelectedForGeneration(false)
+    setIsGenerating(false)
+    setGeneratedContent((prev) => ({
+      ...prev,
+      body: "",
+      selectedTitle: "",
+      cta: "",
+    }))
   }
 
   const regenerateContent = async (newCategory: string) => {
@@ -271,6 +282,8 @@ export default function LinkedInPostGenerator() {
   }
 
   const generateContent = async () => {
+    if (hasGeneratedContent) return
+    setHasGeneratedContent(true)
     setIsGenerating(true)
     try {
       const titlesResponse = await fetch("/api/generate-titles", {
@@ -355,28 +368,10 @@ export default function LinkedInPostGenerator() {
         customHashtags: [],
       })
 
-      setCurrentStep(3) // Skip to step 3 (hashtags) instead of step 4
+      setCurrentStep(3)
     } catch (error) {
       console.error("Error generating content:", error)
-      if (error instanceof Error) {
-        console.log("[v0] Using fallback content due to error:", error.message)
-      } else {
-        console.log("[v0] Using fallback content due to an unknown error.")
-      }
-
-      setGeneratedContent({
-        titles: [
-          `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
-          `Why ${selectedTopic} is Reshaping the Future of Work`,
-          `The Ultimate Guide to ${selectedTopic} Success`,
-        ],
-        selectedTitle: `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
-        body: `Here's what I've learned about ${selectedTopic} after years in the industry...\n\n🔥 Key insights that changed my perspective\n💡 Practical tips you can implement today\n🚀 Future trends to watch\n\nWhat's your experience with ${selectedTopic}?`,
-        cta: "What's your take on this? Share your thoughts below! 👇",
-        hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
-        customHashtags: [],
-      })
-      setCurrentStep(3)
+      setHasGeneratedContent(false) // Allow retry on error
     } finally {
       setIsGenerating(false)
     }
@@ -502,6 +497,10 @@ export default function LinkedInPostGenerator() {
       </div>
     )
   }
+
+  useEffect(() => {
+    setHasGeneratedContent(false)
+  }, [selectedTopic, selectedCategory])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -699,118 +698,81 @@ export default function LinkedInPostGenerator() {
           </Card>
         )}
 
+        {/* Step 2: Category Selection and Content Generation */}
         {currentStep === 2 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                Generate Content
+                <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  2
+                </span>
+                Select Post Category & Generate Content
               </CardTitle>
-              <CardDescription>
-                Topic: <Badge variant="secondary">{selectedTopic}</Badge>
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {!isGenerating && generatedContent.titles.length === 0 && (
-                <Button onClick={generateContent} className="w-full" size="lg">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Content
-                </Button>
-              )}
-
-              {isGenerating && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin mr-2" />
-                  <span>Generating amazing content...</span>
-                </div>
-              )}
-
-              {generatedContent.titles.length > 0 && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Choose a title:</h3>
-                    <div className="space-y-2">
-                      {generatedContent.titles.map((title, index) => (
-                        <Button
-                          key={index}
-                          variant={generatedContent.selectedTitle === title ? "default" : "outline"}
-                          className="w-full text-left justify-start h-auto p-4"
-                          onClick={() => selectTitle(title)}
-                        >
-                          {title}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Post Category:</h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Change the category to regenerate the body and CTA with a different style:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {POST_CATEGORIES.map((category) => (
-                        <Button
-                          key={category.name}
-                          variant={selectedCategory === category.name ? "default" : "outline"}
-                          className="h-auto p-3 text-left justify-start"
-                          onClick={() => regenerateContent(category.name)}
-                          disabled={isRegeneratingContent}
-                        >
-                          <div className="w-full space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{category.icon}</span>
-                              <span className="font-medium text-sm">{category.name}</span>
-                            </div>
-                            <Badge
-                              variant={
-                                category.engagement === "Very High"
-                                  ? "default"
-                                  : category.engagement === "High"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {category.engagement} Engagement
-                            </Badge>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                    {isRegeneratingContent && (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        <span className="text-sm">Regenerating content...</span>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-3">Choose your post style:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {POST_CATEGORIES.map((category) => (
+                    <Button
+                      key={category.name}
+                      variant={selectedCategory === category.name ? "default" : "outline"}
+                      className="h-auto p-4 text-left justify-start"
+                      onClick={() => {
+                        setSelectedCategory(category.name)
+                        setIsCategorySelectedForGeneration(true)
+                      }}
+                    >
+                      <div className="w-full space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{category.icon}</span>
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 text-left">{category.description}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              category.engagement === "Very High"
+                                ? "default"
+                                : category.engagement === "High"
+                                  ? "secondary"
+                                  : "outline"
+                            }
+                            className="text-xs"
+                          >
+                            {category.engagement} Engagement
+                          </Badge>
+                          <span className="text-xs text-gray-500">{category.examples.join(", ")}</span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Generated Body:</h3>
-                    <Textarea
-                      value={generatedContent.body}
-                      onChange={(e) => setGeneratedContent((prev) => ({ ...prev, body: e.target.value }))}
-                      rows={6}
-                      className="resize-none"
-                    />
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Call to Action:</h3>
-                    <Textarea
-                      value={generatedContent.cta}
-                      onChange={(e) => setGeneratedContent((prev) => ({ ...prev, cta: e.target.value }))}
-                      rows={2}
-                      className="resize-none"
-                    />
-                  </div>
-
-                  <Button onClick={() => setCurrentStep(3)} className="w-full">
-                    Continue to Hashtags
-                  </Button>
+                    </Button>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              <div className="flex justify-center">
+                <Button
+                  onClick={generateContent}
+                  disabled={
+                    !selectedTopic ||
+                    !selectedCategory ||
+                    !isCategorySelectedForGeneration ||
+                    hasGeneratedContent ||
+                    isGenerating
+                  }
+                  size="lg"
+                  className="px-8"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating Content...
+                    </>
+                  ) : (
+                    "Generate Content"
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
