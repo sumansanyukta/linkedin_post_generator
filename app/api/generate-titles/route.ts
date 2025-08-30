@@ -8,15 +8,37 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
-    const prompt = `Act as a data expert creating a LinkedIn "one-slide wisdom" post. 
-    Your task is to generate 3 highly engaging hooks (titles) for the topic: ${topic}.
-    Your response should be 3 impactful titles (1-2 lines each) that:
-    Are tailored to the category: ${category}.
-    Grab attention by using numbers (e.g., "3 secrets," "5 mistakes").
+    const prompt = `Act as a data expert creating a LinkedIn post. 
+    Your task is to generate 1 highly engaging hooks for the topic: ${topic}.
+    Grab attention by using numbers (e.g., "3 secrets," "5 mistakes"), only use it when it is appropriate to use.
     Address the audience directly using "you."  
+    Constraint: keep the total number of characters under 60.
+    
     Frame the topic as a problem and agitate it to create curiosity.
     Are specific, simple, and unique.
-    Example format: [Number] [Topic] Secrets I Wish I Knew Earlier (They Made Me [Outcome]).
+    Rephrase the ${topic}, but not reuse the topic, and the title should be relevant to the user, don't add unneccesay jargons
+    The Problem/Solution Amplifier:
+    Template: The #1 [Data Problem] Your [Target Audience/Role] Is Making (And How to Fix It in [Timeframe])
+    The Benefit-Driven Transformation:
+    Template: How to [Achieve Desired Data Outcome] in As Little As [Timeframe], Even If You [Common Objection/Past Failure]
+    The Curiosity-Inducing Story:
+    Template: A [Unlikely Character/Unexpected Tool] Reveals How to [Achieve Surprising Data Result] Without [Painful Effort/Expensive Resources]
+    The Value-Packed Listicle:
+    Template: [Odd Number] [Specific Adjective, e.g., "Game-Changing"] [Data Topic] Techniques to [Key Benefit] for [Target Audience/Role]
+    The Authoritative Stance:
+    Template: My Honest Opinion on [Industry Trend/Controversial Data Topic] (Based on [Specific Achievement/Data])
+    The Direct Offer with Authority:
+    Template: I Help [Specific Data Market Segment] to [Solve Problem/Achieve Data Goal] (My [Number] Years of Experience Show How)
+    The Avoidance of Pain Warning:
+    Template: Don’t Even Think About Trying to [Painful Data Action/Mistake] Until You Read This [Key Insight/Solution]
+    The Before-After Transformation:
+    Template: From [Undesirable "Before" State in Data] to [Desirable "After" State in Data]: The [Specific Method/Product] That Made It Possible
+    The Targeted Question & Solution:
+    Template: Are You Tired of [Specific Data Problem/Frustration]? Here’s How to [Simple Solution/Benefit]
+    The Personal Milestone & Lesson:
+    Template: My [Personal Data Achievement/Business Aspect] Just Hit [Impressive Milestone]: [Number] Rules I Wish I Knew When I Started in [Year/Context]
+
+    select the post appropriate template and and write a single title
     Return the response as a valid JSON object with this exact format:
     {
       "titles": ["Title 1 here...", "Title 2 here...", "Title 3 here..."]

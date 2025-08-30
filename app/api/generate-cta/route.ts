@@ -9,14 +9,19 @@ export async function POST(request: NextRequest) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     const prompt = `Act as a data expert writing a call-to-action (CTA) for a LinkedIn "one-slide wisdom" post. 
-                    Your task is to generate a short, engaging CTA that:
+                    Your task is to generate a short, engaging CTA directly related to the topic:
                     Is 1-2 lines long.
-                    Encourages conversation and community, not promotion.
-                    Includes an open-ended question (e.g., "What's your biggest takeaway?").
-                    Suggests a non-sales-related next step (e.g., "follow for more," "tag a colleague").
+                    Encourages conversation and community, not promotions
                     Ends on a positive, inclusive note to build rapport.
                     Can optionally include a "stealth close" that subtly points to a free resource.
+                    examples:
+                     Template:
+            1.[Ask a direct, thought-provoking question related to the core insight or problem discussed in your post]? Share your thoughts/experiences/best practices in the comments below!
+            2.[If you found this valuable, [invite to connect/follow] for more [specific type of content, e.g., 'actionable data insights']. For an even deeper dive into [topic], check out my [resource type, e.g., free guide/webinar/article] (link in comments/bio)!"
+            3.[Are you currently grappling with [reiterate a specific problem mentioned in your post]? Let's connect to explore how [your solution/approach/service] can help you achieve [desired positive outcome]. Send me a DM or book a call via the link in my bio to discuss your strategy."
+            4. Struggling to translate complex data into clear, actionable business insights? Our bespoke Data Storytelling workshop helps teams unlock the true potential of their analytics. DM me 'INSIGHTS' or visit our website to learn how your organisation can benefit."
                     Do not include any other text besides the CTA itself.
+
 
                       Return the response as a valid JSON object with this exact format:
                    {
