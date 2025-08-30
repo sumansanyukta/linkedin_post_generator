@@ -97,7 +97,7 @@ export default function LinkedInPostGenerator() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("One Slide Wisdom") // Set default category
   const [topicSearch, setTopicSearch] = useState("")
   const [techArticles, setTechArticles] = useState<TechArticle[]>([])
   const [isLoadingArticles, setIsLoadingArticles] = useState(false)
@@ -108,6 +108,7 @@ export default function LinkedInPostGenerator() {
   const [customUrlContent, setCustomUrlContent] = useState<CustomUrlContent | null>(null)
   const [newHashtag, setNewHashtag] = useState("")
   const [isRegeneratingHashtags, setIsRegeneratingHashtags] = useState(false)
+  const [isRegeneratingContent, setIsRegeneratingContent] = useState(false) // Add state for content regeneration
   const [selectedThumbnailTemplate, setSelectedThumbnailTemplate] = useState("")
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent>({
     titles: [],
@@ -203,21 +204,70 @@ export default function LinkedInPostGenerator() {
 
   const steps = [
     { id: 1, name: "Select Topic", icon: TrendingUp },
-    { id: 2, name: "Choose Category", icon: ImageIcon },
-    { id: 3, name: "Generate Content", icon: Sparkles },
-    { id: 4, name: "Manage Hashtags", icon: Hash },
-    { id: 5, name: "Generate Thumbnail", icon: ImageIcon },
-    { id: 6, name: "Final Post", icon: ImageIcon },
+    { id: 2, name: "Generate Content", icon: Sparkles },
+    { id: 3, name: "Manage Hashtags", icon: Hash },
+    { id: 4, name: "Generate Thumbnail", icon: ImageIcon },
+    { id: 5, name: "Final Post", icon: ImageIcon },
   ]
 
   const handleTopicSelect = (articleTitle: string, isCustom = false) => {
     setSelectedTopic(articleTitle)
-    setCurrentStep(2)
+    setCurrentStep(2) // Skip category selection, go directly to content generation
   }
 
-  const handleCategorySelect = (categoryName: string) => {
-    setSelectedCategory(categoryName)
-    setCurrentStep(3)
+  const regenerateContent = async (newCategory: string) => {
+    setIsRegeneratingContent(true)
+    setSelectedCategory(newCategory)
+
+    try {
+      const bodyResponse = await fetch("/api/generate-body", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: selectedTopic,
+          category: newCategory,
+          title: generatedContent.selectedTitle,
+        }),
+      })
+      const bodyData = await bodyResponse.json()
+
+      if (bodyData.error) {
+        throw new Error(`Body API error: ${bodyData.error}`)
+      }
+
+      if (!bodyData || !bodyData.body) {
+        throw new Error("Invalid body response: Expected body content")
+      }
+
+      const ctaResponse = await fetch("/api/generate-cta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: selectedTopic,
+          category: newCategory,
+        }),
+      })
+      const ctaData = await ctaResponse.json()
+
+      if (ctaData.error) {
+        throw new Error(`CTA API error: ${ctaData.error}`)
+      }
+
+      if (!ctaData || !ctaData.cta) {
+        throw new Error("Invalid CTA response: Expected CTA content")
+      }
+
+      setGeneratedContent((prev) => ({
+        ...prev,
+        body: bodyData.body,
+        cta: ctaData.cta,
+      }))
+    } catch (error) {
+      console.error("Error regenerating content:", error)
+      // Keep existing content on error
+    } finally {
+      setIsRegeneratingContent(false)
+    }
   }
 
   const generateContent = async () => {
@@ -228,7 +278,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
         }),
       })
       const titlesData = await titlesResponse.json()
@@ -246,7 +296,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
           title: titlesData.titles[0],
         }),
       })
@@ -265,7 +315,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
         }),
       })
       const ctaData = await ctaResponse.json()
@@ -283,7 +333,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
         }),
       })
       const hashtagsData = await hashtagsResponse.json()
@@ -305,7 +355,7 @@ export default function LinkedInPostGenerator() {
         customHashtags: [],
       })
 
-      setCurrentStep(4)
+      setCurrentStep(3) // Skip to step 3 (hashtags) instead of step 4
     } catch (error) {
       console.error("Error generating content:", error)
       if (error instanceof Error) {
@@ -326,7 +376,7 @@ export default function LinkedInPostGenerator() {
         hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
         customHashtags: [],
       })
-      setCurrentStep(4)
+      setCurrentStep(3)
     } finally {
       setIsGenerating(false)
     }
@@ -407,7 +457,7 @@ export default function LinkedInPostGenerator() {
   }
 
   const finalizePost = () => {
-    setCurrentStep(6)
+    setCurrentStep(5)
   }
 
   const generateThumbnail = (templateId: string) => {
@@ -653,64 +703,11 @@ export default function LinkedInPostGenerator() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="w-5 h-5" />
-                Choose Post Category
-              </CardTitle>
-              <CardDescription>
-                Selected topic: <Badge variant="secondary">{selectedTopic}</Badge>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {POST_CATEGORIES.map((category) => (
-                  <Button
-                    key={category.name}
-                    variant="outline"
-                    className="h-auto p-6 text-left justify-start bg-white hover:bg-blue-50 border-2 hover:border-blue-200 transition-all"
-                    onClick={() => handleCategorySelect(category.name)}
-                  >
-                    <div className="w-full space-y-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{category.icon}</span>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                          <Badge
-                            variant={
-                              category.engagement === "Very High"
-                                ? "default"
-                                : category.engagement === "High"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                            className="text-xs"
-                          >
-                            {category.engagement} Engagement
-                          </Badge>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600">{category.description}</p>
-                      <div className="text-xs text-gray-500">
-                        <span className="font-medium">Examples: </span>
-                        {category.examples.join(", ")}
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {currentStep === 3 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5" />
                 Generate Content
               </CardTitle>
               <CardDescription>
                 Topic: <Badge variant="secondary">{selectedTopic}</Badge>
-                Category: <Badge variant="secondary">{selectedCategory}</Badge>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -747,6 +744,49 @@ export default function LinkedInPostGenerator() {
                   </div>
 
                   <div>
+                    <h3 className="font-semibold mb-2">Post Category:</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Change the category to regenerate the body and CTA with a different style:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {POST_CATEGORIES.map((category) => (
+                        <Button
+                          key={category.name}
+                          variant={selectedCategory === category.name ? "default" : "outline"}
+                          className="h-auto p-3 text-left justify-start"
+                          onClick={() => regenerateContent(category.name)}
+                          disabled={isRegeneratingContent}
+                        >
+                          <div className="w-full space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{category.icon}</span>
+                              <span className="font-medium text-sm">{category.name}</span>
+                            </div>
+                            <Badge
+                              variant={
+                                category.engagement === "Very High"
+                                  ? "default"
+                                  : category.engagement === "High"
+                                    ? "secondary"
+                                    : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {category.engagement} Engagement
+                            </Badge>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                    {isRegeneratingContent && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <span className="text-sm">Regenerating content...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
                     <h3 className="font-semibold mb-2">Generated Body:</h3>
                     <Textarea
                       value={generatedContent.body}
@@ -766,7 +806,7 @@ export default function LinkedInPostGenerator() {
                     />
                   </div>
 
-                  <Button onClick={() => setCurrentStep(4)} className="w-full">
+                  <Button onClick={() => setCurrentStep(3)} className="w-full">
                     Continue to Hashtags
                   </Button>
                 </div>
@@ -775,7 +815,7 @@ export default function LinkedInPostGenerator() {
           </Card>
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 3 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -885,7 +925,7 @@ export default function LinkedInPostGenerator() {
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setCurrentStep(5)} className="flex-1">
+                <Button onClick={() => setCurrentStep(4)} className="flex-1">
                   Continue to Thumbnail
                 </Button>
                 <Button variant="outline" onClick={copyToClipboard} className="flex items-center gap-2 bg-transparent">
@@ -897,7 +937,7 @@ export default function LinkedInPostGenerator() {
           </Card>
         )}
 
-        {currentStep === 5 && (
+        {currentStep === 4 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -944,7 +984,7 @@ export default function LinkedInPostGenerator() {
                 <Button onClick={finalizePost} className="flex-1" disabled={!selectedThumbnailTemplate}>
                   Finalize Post
                 </Button>
-                <Button variant="outline" onClick={() => setCurrentStep(4)}>
+                <Button variant="outline" onClick={() => setCurrentStep(3)}>
                   Back to Hashtags
                 </Button>
               </div>
@@ -952,7 +992,7 @@ export default function LinkedInPostGenerator() {
           </Card>
         )}
 
-        {currentStep === 6 && (
+        {currentStep === 5 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -1067,10 +1107,10 @@ export default function LinkedInPostGenerator() {
                   <Copy className="w-4 h-4 mr-2" />
                   Copy Complete Post
                 </Button>
-                <Button variant="outline" onClick={() => setCurrentStep(5)} className="bg-transparent">
+                <Button variant="outline" onClick={() => setCurrentStep(4)} className="bg-transparent">
                   Edit Thumbnail
                 </Button>
-                <Button variant="outline" onClick={() => setCurrentStep(4)} className="bg-transparent">
+                <Button variant="outline" onClick={() => setCurrentStep(3)} className="bg-transparent">
                   Edit Hashtags
                 </Button>
                 <Button variant="outline" onClick={() => setCurrentStep(1)} className="bg-transparent">
