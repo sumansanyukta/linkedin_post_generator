@@ -212,7 +212,7 @@ export default function LinkedInPostGenerator() {
 
   const handleTopicSelect = (articleTitle: string, isCustom = false) => {
     setSelectedTopic(articleTitle)
-    setCurrentStep(2) // Skip category selection, go directly to content generation
+    setCurrentStep(2) // Move to step 2 for explicit content generation
   }
 
   const regenerateContent = async (newCategory: string) => {
@@ -271,6 +271,8 @@ export default function LinkedInPostGenerator() {
   }
 
   const generateContent = async () => {
+    if (isGenerating || generatedContent.titles.length > 0) return // Prevent duplicate calls
+
     setIsGenerating(true)
     try {
       const titlesResponse = await fetch("/api/generate-titles", {
@@ -792,7 +794,7 @@ export default function LinkedInPostGenerator() {
                       value={generatedContent.body}
                       onChange={(e) => setGeneratedContent((prev) => ({ ...prev, body: e.target.value }))}
                       rows={6}
-                      className="resize-none"
+                      className="resize-none whitespace-pre-wrap"
                     />
                   </div>
 
@@ -912,7 +914,9 @@ export default function LinkedInPostGenerator() {
                 <h3 className="font-semibold mb-2">Post Preview:</h3>
                 <div className="bg-white border rounded-lg p-4 space-y-3 max-h-64 overflow-y-auto">
                   <h4 className="font-bold text-lg">{generatedContent.selectedTitle}</h4>
-                  <div className="whitespace-pre-wrap text-gray-700 text-sm">{generatedContent.body}</div>
+                  <div className="whitespace-pre-wrap text-gray-700 text-sm">
+                    {generatedContent.body.replace(/\*\*\*/g, "").replace(/➡️ /g, "")}
+                  </div>
                   <div className="text-blue-600 font-medium text-sm">{generatedContent.cta}</div>
                   <div className="flex flex-wrap gap-1">
                     {getAllHashtags().map((hashtag, index) => (
