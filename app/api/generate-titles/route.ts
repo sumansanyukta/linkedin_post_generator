@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { createGroq } from "@ai-sdk/groq"
+import { generateText } from "ai"
 
 export async function POST(request: NextRequest) {
   try {
     const { topic, category } = await request.json()
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
+    const groq = createGroq({ apiKey: process.env.GROQ_API_KEY })
 
     const prompt = `Act as a data expert creating a LinkedIn "one-slide wisdom" post. 
     Your task is to generate 3 highly engaging hooks (titles) for the topic: ${topic}.
@@ -24,9 +24,12 @@ export async function POST(request: NextRequest) {
 
     Do not include any extra text or markdown formatting like \`\`\`json.`
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    let text = response.text()
+    const result = await generateText({
+      model: groq("llama-3.3-70b-versatile"),
+      prompt: prompt,
+    })
+
+    let text = result.text
 
     console.log("[v0] Raw AI response:", text)
 

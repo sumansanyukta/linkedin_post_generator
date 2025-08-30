@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { createGroq } from "@ai-sdk/groq"
+import { generateText } from "ai"
 
-function getBodyInstructions(category: string): string {
+function getBodyInstructions(category: string, topic: string): string {
   switch (category) {
     case "One-Slide Wisdom":
       return `Act as a data expert creating the body of a LinkedIn for 
@@ -60,8 +61,9 @@ function getBodyInstructions(category: string): string {
                   Do not include any extra text or markdown formatting like \`\`\`json.`
 
     case "One-Minute Metric":
-      return `Act as a data expert creating the body of a LinkedIn for 
-              select_category ${category} which is “A week in data”, 
+      return `Act as a data expert creating the body of a LinkedIn post.
+              The category is "${category}", and the topic is "${topic}".
+              
               Your task is to generate a highly skimmable listicle with 3-5
               bullet points. The listicle must:
               - Deliver one main idea related to the topic.
@@ -70,7 +72,7 @@ function getBodyInstructions(category: string): string {
               - Use simple, professional language that avoids unnecessary jargon.
               Return the response as a valid JSON object with this exact format:
                   {
-                    "body": body text here
+                    "body": "Your body content here..."
                   }
 
                   Do not include any extra text or markdown formatting like \`\`\`json.`
@@ -89,10 +91,9 @@ export async function POST(request: NextRequest) {
   try {
     const { topic, category, title } = await request.json()
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
+    const groq = createGroq({ apiKey: process.env.GROQ_API_KEY })
 
-    const categoryInstructions = getBodyInstructions(category)
+    const categoryInstructions = getBodyInstructions(category, topic)
 
     const prompt = `Act as a data expert creating the body of a LinkedIn post.
                    The category is "${category}", and the topic is "${topic}".
@@ -106,9 +107,12 @@ export async function POST(request: NextRequest) {
 
                    Do not include any extra text or markdown formatting like \`\`\`json.`
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    let text = response.text()
+    const result = await generateText({
+      model: groq("llama-3.3-70b-versatile"),
+      prompt: prompt,
+    })
+
+    let text = result.text
 
     console.log("[v0] Raw AI response:", text)
 
@@ -127,6 +131,21 @@ export async function POST(request: NextRequest) {
     }
 
     text = text.substring(jsonStart, jsonEnd)
+
+    // Replace literal newlines and other control characters with proper JSON escape sequences
+    text = text
+      .replace(/\n/g, "\\n")
+      .replace(/\r/g, "\\r")
+      .replace(/\t/g, "\\t")
+      .replace(/\f/g, "\\f")
+      .replace(/\b/g, "\\b")
+      // Fix any unescaped quotes within the JSON string values
+      .replace(/"([^"]*)"(\s*:\s*)"([^"]*(?:\\.[^"]*)*)"([^"]*)"([^"]*)/g, (match, key, colon, value, after) => {
+        // Only escape quotes that are not already escaped
+        const escapedValue = value.replace(/(?<!\\)"/g, '\\"')
+        return `"${key}"${colon}"${escapedValue}"${after}`
+      })
+
     console.log("[v0] Cleaned JSON text:", text)
 
     // Parse the JSON response
