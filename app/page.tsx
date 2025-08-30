@@ -308,24 +308,29 @@ export default function LinkedInPostGenerator() {
       setCurrentStep(4)
     } catch (error) {
       console.error("Error generating content:", error)
-      console.log("[v0] Using fallback content due to error:", error.message)
-      setGeneratedContent({
-        titles: [
-          `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
-          `Why ${selectedTopic} is Reshaping the Future of Work`,
-          `The Ultimate Guide to ${selectedTopic} Success`,
-        ],
-        selectedTitle: `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
-        body: `Here's what I've learned about ${selectedTopic} after years in the industry...\n\n🔥 Key insights that changed my perspective\n💡 Practical tips you can implement today\n🚀 Future trends to watch\n\nWhat's your experience with ${selectedTopic}?`,
-        cta: "What's your take on this? Share your thoughts below! 👇",
-        hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
-        customHashtags: [],
-      })
-      setCurrentStep(4)
-    } finally {
-      setIsGenerating(false)
+      if (error instanceof Error) {
+      console.log("[v0] Using fallback content due to error:", error.message);
+    } else {
+      console.log("[v0] Using fallback content due to an unknown error.");
     }
+    
+    setGeneratedContent({
+      titles: [
+        `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
+        `Why ${selectedTopic} is Reshaping the Future of Work`,
+        `The Ultimate Guide to ${selectedTopic} Success`,
+      ],
+      selectedTitle: `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
+      body: `Here's what I've learned about ${selectedTopic} after years in the industry...\n\n🔥 Key insights that changed my perspective\n💡 Practical tips you can implement today\n🚀 Future trends to watch\n\nWhat's your experience with ${selectedTopic}?`,
+      cta: "What's your take on this? Share your thoughts below! 👇",
+      hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
+      customHashtags: [],
+    });
+    setCurrentStep(4);
+  } finally {
+    setIsGenerating(false);
   }
+}
 
   const addCustomHashtag = () => {
     if (newHashtag.trim() && !getAllHashtags().includes(formatHashtag(newHashtag))) {

@@ -8,9 +8,22 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-    const prompt = `Generate a short and compelling Call to Action (CTA) for a LinkedIn post based on the following content: "${ctaPrompt}". The CTA should be a single phrase, less than 15 words, and should encourage engagement (e.g., "Learn more," "Leave a comment," "Tag a friend").
+    const prompt = `Act as a data expert writing a call-to-action (CTA) for a LinkedIn "one-slide wisdom" post. 
+                    Your task is to generate a short, engaging CTA that:
+                    Is 1-2 lines long.
+                    Encourages conversation and community, not promotion.
+                    Includes an open-ended question (e.g., "What's your biggest takeaway?").
+                    Suggests a non-sales-related next step (e.g., "follow for more," "tag a colleague").
+                    Ends on a positive, inclusive note to build rapport.
+                    Can optionally include a "stealth close" that subtly points to a free resource.
+                    Do not include any other text besides the CTA itself.
 
-Return the response as a valid JSON object with a single key "cta", which is a string. Do not include any extra text or markdown formatting like \`\`\`json.`;
+                      Return the response as a valid JSON object with this exact format:
+                   {
+                      "cta": "Your cta content here..."
+                    }
+                    
+                    Do not include any extra text or markdown formatting like \`\`\`json.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

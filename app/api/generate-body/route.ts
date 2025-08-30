@@ -8,26 +8,22 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
-    const prompt = `Generate compelling body content for a LinkedIn post with the title "${title}" about "${topic}" in the "${category}" category.
+    const prompt = `Act as a data expert creating the body of a LinkedIn "one-slide wisdom" post.
+                   The category is ${category}, and the topic is ${topic}.
+                   Your task is to generate a highly skimmable listicle with 3-4 bullet points. 
+                   The listicle must:
+                   Deliver one main idea related to the ${topic}.
+                   Consist of 3-5 unique, valuable insights or actionable tips.
+                   Keep each sentence to a maximum of 10 words.
+                   Use line breaks between each bullet point to enhance readability on mobile devices.
+                   For each point, follow this formula: [Insight/Action]: It [feature/action] so you can [benefit], which means [meaning/impact for the reader].
+                   Use simple, professional language that avoids unnecessary jargon.
+                   Return the response as a valid JSON object with this exact format:
+                   {
+                      "body": "Your body content here..."
+                    }
 
-Guidelines:
-- Write 2-4 paragraphs of engaging content
-- Include relevant insights, tips, or experiences
-- Use a professional but conversational tone
-- Include emojis sparingly for visual appeal
-- Make it valuable and shareable
-- Keep it under 1300 characters (LinkedIn limit)
-
-Title: ${title}
-Topic: ${topic}
-Category: ${category}
-
-Return the response as a valid JSON object with this exact format:
-{
-  "body": "Your body content here..."
-}
-
-Do not include any extra text or markdown formatting like \`\`\`json.`
+                   Do not include any extra text or markdown formatting like \`\`\`json.`
 
     const result = await model.generateContent(prompt)
     const response = await result.response
