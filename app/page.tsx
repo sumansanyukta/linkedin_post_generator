@@ -570,7 +570,7 @@ export default function LinkedInPostGenerator() {
                     </h3>
                     <Button
                       variant="outline"
-                      className="w-full h-auto p-6 text-left justify-start bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 border-blue-200 hover:border-blue-300 transition-all"
+                      className="w-full h-auto p-6 text-left justify-start bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-2 hover:border-blue-200 transition-all"
                       onClick={() => handleTopicSelect(filteredArticles[0].title)}
                     >
                       <div className="w-full space-y-3">
@@ -741,7 +741,7 @@ export default function LinkedInPostGenerator() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div className="space-y-4">
                   <div className="bg-white border rounded-lg p-6 space-y-4">
                     <h2 className="text-xl font-bold text-balance">{generatedContent.selectedTitle}</h2>
