@@ -29,15 +29,24 @@ export async function POST(request: NextRequest) {
     const response = await result.response
     let text = response.text()
 
-    // Remove markdown code fences if present
-    text = text.replace(/```json\s*/g, "").replace(/```\s*/g, "")
+    console.log("[v0] Raw AI response:", text)
 
-    // Find the JSON object boundaries
+    // Remove markdown code fences and any surrounding text
+    text = text
+      .replace(/```json\s*/g, "")
+      .replace(/```\s*/g, "")
+      .trim()
+
+    // Find the JSON object boundaries more robustly
     const jsonStart = text.indexOf("{")
     const jsonEnd = text.lastIndexOf("}") + 1
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-      text = text.substring(jsonStart, jsonEnd)
+
+    if (jsonStart === -1 || jsonEnd === 0) {
+      throw new Error("No valid JSON object found in AI response")
     }
+
+    text = text.substring(jsonStart, jsonEnd)
+    console.log("[v0] Cleaned JSON text:", text)
 
     // Parse the JSON response
     const parsedResponse = JSON.parse(text)

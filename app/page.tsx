@@ -238,7 +238,7 @@ export default function LinkedInPostGenerator() {
       }
 
       if (!titlesData || !titlesData.titles || !Array.isArray(titlesData.titles) || titlesData.titles.length === 0) {
-        throw new Error("Invalid titles response")
+        throw new Error("Invalid titles response: Expected array of titles")
       }
 
       const bodyResponse = await fetch("/api/generate-body", {
@@ -257,7 +257,7 @@ export default function LinkedInPostGenerator() {
       }
 
       if (!bodyData || !bodyData.body) {
-        throw new Error("Invalid body response")
+        throw new Error("Invalid body response: Expected body content")
       }
 
       const ctaResponse = await fetch("/api/generate-cta", {
@@ -275,7 +275,7 @@ export default function LinkedInPostGenerator() {
       }
 
       if (!ctaData || !ctaData.cta) {
-        throw new Error("Invalid CTA response")
+        throw new Error("Invalid CTA response: Expected CTA content")
       }
 
       const hashtagsResponse = await fetch("/api/generate-hashtags", {
@@ -293,7 +293,7 @@ export default function LinkedInPostGenerator() {
       }
 
       if (!hashtagsData || !hashtagsData.hashtags || !Array.isArray(hashtagsData.hashtags)) {
-        throw new Error("Invalid hashtags response")
+        throw new Error("Invalid hashtags response: Expected array of hashtags")
       }
 
       setGeneratedContent({
@@ -309,28 +309,28 @@ export default function LinkedInPostGenerator() {
     } catch (error) {
       console.error("Error generating content:", error)
       if (error instanceof Error) {
-      console.log("[v0] Using fallback content due to error:", error.message);
-    } else {
-      console.log("[v0] Using fallback content due to an unknown error.");
+        console.log("[v0] Using fallback content due to error:", error.message)
+      } else {
+        console.log("[v0] Using fallback content due to an unknown error.")
+      }
+
+      setGeneratedContent({
+        titles: [
+          `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
+          `Why ${selectedTopic} is Reshaping the Future of Work`,
+          `The Ultimate Guide to ${selectedTopic} Success`,
+        ],
+        selectedTitle: `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
+        body: `Here's what I've learned about ${selectedTopic} after years in the industry...\n\n🔥 Key insights that changed my perspective\n💡 Practical tips you can implement today\n🚀 Future trends to watch\n\nWhat's your experience with ${selectedTopic}?`,
+        cta: "What's your take on this? Share your thoughts below! 👇",
+        hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
+        customHashtags: [],
+      })
+      setCurrentStep(4)
+    } finally {
+      setIsGenerating(false)
     }
-    
-    setGeneratedContent({
-      titles: [
-        `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
-        `Why ${selectedTopic} is Reshaping the Future of Work`,
-        `The Ultimate Guide to ${selectedTopic} Success`,
-      ],
-      selectedTitle: `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
-      body: `Here's what I've learned about ${selectedTopic} after years in the industry...\n\n🔥 Key insights that changed my perspective\n💡 Practical tips you can implement today\n🚀 Future trends to watch\n\nWhat's your experience with ${selectedTopic}?`,
-      cta: "What's your take on this? Share your thoughts below! 👇",
-      hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
-      customHashtags: [],
-    });
-    setCurrentStep(4);
-  } finally {
-    setIsGenerating(false);
   }
-}
 
   const addCustomHashtag = () => {
     if (newHashtag.trim() && !getAllHashtags().includes(formatHashtag(newHashtag))) {
