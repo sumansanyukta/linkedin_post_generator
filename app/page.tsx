@@ -436,7 +436,10 @@ export default function LinkedInPostGenerator() {
     }
 
     return (
-      <div className={`w-full h-48 rounded-lg p-6 flex items-center justify-center relative ${getBackgroundStyle()}`}>
+      <div
+        className={`aspect-square w-full max-w-sm mx-auto rounded-lg p-6 flex items-center justify-center relative ${getBackgroundStyle()}`}
+        style={{ width: "300px", height: "300px" }}
+      >
         {template.id === "tech-grid" && (
           <div className="absolute inset-0 opacity-10">
             <div className="grid grid-cols-8 grid-rows-6 h-full w-full">
@@ -738,6 +741,11 @@ export default function LinkedInPostGenerator() {
                       template={THUMBNAIL_TEMPLATES.find((t) => t.id === selectedThumbnailTemplate)!}
                       title={generatedContent.selectedTitle}
                     />
+                    <div className="mt-3 text-center">
+                      <Badge variant="secondary">
+                        {THUMBNAIL_TEMPLATES.find((t) => t.id === selectedThumbnailTemplate)?.name}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               )}
