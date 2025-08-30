@@ -1,80 +1,42 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-function getBodyInstructions(category: string, topic: string): string {
+function getBodyInstructions(category: string): string {
   switch (category) {
     case "One-Slide Wisdom":
-      return `Act as a data expert creating the body of a LinkedIn for 
-              select_category ${category} which is “One-Slide Wisdom”, 
-              Your task is to generate a highly skimmable listicle with 3-5
-              bullet points. The listicle must:
-
-              - Deliver one main idea related to the topic.
-              - Consist of 3-5 unique, valuable insights or actionable tips.
-              - Keep each sentence to a maximum of 10 words.
-              - Use line breaks between each bullet point to enhance readability on mobile devices.
-              - For each point, follow this formula: 
-              [Insight/Action]: It [feature/action] so you can [benefit], which means [meaning/impact for the reader].
-              - Use simple, professional language that avoids unnecessary jargon.
-              Return the response as a valid JSON object with this exact format:
-              {
-                "body": body text here
-              }
-
-              Do not include any extra text or markdown formatting like \`\`\`json.`
+      return `Generate a highly skimmable listicle with 3-4 bullet points that:
+              - Delivers one main idea with actionable insights
+              - Uses the formula: [Insight/Action]: It [feature/action] so you can [benefit], which means [meaning/impact]
+              - Keeps each sentence to maximum 10 words
+              - Uses line breaks between bullet points for mobile readability
+              - Focuses on practical wisdom that can be applied immediately`
 
     case "Code Snippet of the Week":
-      return `Act as a data expert creating the body of a LinkedIn for 
-              select_category ${category} which is “Code Snippet of the week”, 
-              Your task is to generate a highly skimmable listicle with 3-5
-              bullet points. The listicle must:
-
-              - Deliver one main idea related to the topic.
-              - Consist of 3-5 unique, valuable insights or actionable tips.
-              - Keep each sentence to a maximum of 10 words.
-              - Use line breaks between each bullet point to enhance readability on mobile devices.
-              - and a placeholder for code snippet
-              Return the response as a valid JSON object with this exact format:
-              {
-                "body": body text here
-              }
-
-              Do not include any extra text or markdown formatting like \`\`\`json.`
+      return `Generate technical content that:
+              - Provides a clear introduction to the code concept
+              - Explains the technical implementation in simple terms
+              - Highlights key benefits and use cases
+              - Includes practical applications or scenarios
+              - Uses developer-friendly language while remaining accessible
+              - Focuses on why this code snippet is valuable to learn`
 
     case "A week in data":
-      return `Act as a data expert creating the body of a LinkedIn for 
-              select_category ${category} which is “A week in data”, 
-              Your task is to generate a highly skimmable listicle with 3-5
-              bullet points. The listicle must:
-
-              - Deliver one main idea related to the topic.
-              - Consist of 3 curated link and each one described on valuable insights or actionable tips.
-              - Keep each sentence to a maximum of 10 words.
-              - Use line breaks between each bullet point to enhance readability on mobile devices.
-              - Use simple, professional language that avoids unnecessary jargon.
-              Return the response as a valid JSON object with this exact format:
-                  {
-                    "body": body text here
-                  }
-
-                  Do not include any extra text or markdown formatting like \`\`\`json.`
+      return `Generate a curated, scannable list that:
+              - Presents 3-5 key data points or insights
+              - Uses clear, digestible formatting with bullet points
+              - Includes specific numbers, percentages, or metrics when relevant
+              - Provides context for why each data point matters
+              - Maintains a news-like, informative tone
+              - Focuses on trends and patterns in the data`
 
     case "One-Minute Metric":
-      return `Act as a data expert creating the body of a LinkedIn post.
-              The category is "${category}", and the topic is "${topic}".
-              
-              Your task is to generate a highly skimmable listicle with 3-5
-              bullet points. The listicle must:
-              - Deliver one main idea related to the topic.
-              - Keep each sentence to a maximum of 10 words.
-              - Use line breaks between each bullet point to enhance readability on mobile devices.
-              - Use simple, professional language that avoids unnecessary jargon.
-              Return the response as a valid JSON object with this exact format:
-                  {
-                    "body": "Your body content here..."
-                  }
-
-                  Do not include any extra text or markdown formatting like \`\`\`json.`
+      return `Generate content focused on a single powerful metric that:
+              - Highlights one key performance indicator or statistic
+              - Explains the significance and impact of this metric
+              - Provides context for why this number matters
+              - Includes actionable insights based on the metric
+              - Uses clear, compelling language to emphasize importance
+              - Connects the metric to broader business or industry implications`
 
     default:
       return `Generate professional LinkedIn post content that:
@@ -93,7 +55,7 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
-    const categoryInstructions = getBodyInstructions(category, topic)
+    const categoryInstructions = getBodyInstructions(category)
 
     const prompt = `Act as a data expert creating the body of a LinkedIn post.
                    The category is "${category}", and the topic is "${topic}".
@@ -108,7 +70,8 @@ export async function POST(request: NextRequest) {
                    Do not include any extra text or markdown formatting like \`\`\`json.`
 
     const result = await model.generateContent(prompt)
-    let text = result.response.text()
+    const response = await result.response
+    let text = response.text()
 
     console.log("[v0] Raw AI response:", text)
 
@@ -127,21 +90,6 @@ export async function POST(request: NextRequest) {
     }
 
     text = text.substring(jsonStart, jsonEnd)
-
-    // Replace literal newlines and other control characters with proper JSON escape sequences
-    text = text
-      .replace(/\n/g, "\\n")
-      .replace(/\r/g, "\\r")
-      .replace(/\t/g, "\\t")
-      .replace(/\f/g, "\\f")
-      .replace(/\b/g, "\\b")
-      // Fix any unescaped quotes within the JSON string values
-      .replace(/"([^"]*)"(\s*:\s*)"([^"]*(?:\\.[^"]*)*)"([^"]*)"([^"]*)/g, (match, key, colon, value, after) => {
-        // Only escape quotes that are not already escaped
-        const escapedValue = value.replace(/(?<!\\)"/g, '\\"')
-        return `"${key}"${colon}"${escapedValue}"${after}`
-      })
-
     console.log("[v0] Cleaned JSON text:", text)
 
     // Parse the JSON response

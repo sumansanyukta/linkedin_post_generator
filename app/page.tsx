@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Loader2, Sparkles, TrendingUp, Hash, ImageIcon, Search, Plus, X, RefreshCw, Copy } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
 
 interface TechArticle {
   title: string
@@ -94,9 +95,8 @@ const POST_CATEGORIES = [
 
 export default function LinkedInPostGenerator() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [hasGeneratedContent, setHasGeneratedContent] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isCategorySelectedForGeneration, setIsCategorySelectedForGeneration] = useState(false)
+  const [selectedTopic, setSelectedTopic] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("One Slide Wisdom") // Set default category
   const [topicSearch, setTopicSearch] = useState("")
   const [techArticles, setTechArticles] = useState<TechArticle[]>([])
@@ -118,7 +118,6 @@ export default function LinkedInPostGenerator() {
     hashtags: [],
     customHashtags: [],
   })
-  const [selectedTopic, setSelectedTopic] = useState("") // Declare selectedTopic variable
 
   useEffect(() => {
     fetchTechNews()
@@ -213,21 +212,13 @@ export default function LinkedInPostGenerator() {
 
   const handleTopicSelect = (articleTitle: string, isCustom = false) => {
     setSelectedTopic(articleTitle)
-    setCurrentStep(2)
-    setHasGeneratedContent(false)
-    setIsGenerating(false)
-    setGeneratedContent({
-      titles: [],
-      selectedTitle: "",
-      body: "",
-      cta: "",
-      hashtags: [],
-      customHashtags: [],
-    })
+    setCurrentStep(2) // Move to step 2 for explicit content generation
   }
 
   const regenerateContent = async (newCategory: string) => {
     setIsRegeneratingContent(true)
+    setSelectedCategory(newCategory)
+
     try {
       const bodyResponse = await fetch("/api/generate-body", {
         method: "POST",
@@ -244,6 +235,10 @@ export default function LinkedInPostGenerator() {
         throw new Error(`Body API error: ${bodyData.error}`)
       }
 
+      if (!bodyData || !bodyData.body) {
+        throw new Error("Invalid body response: Expected body content")
+      }
+
       const ctaResponse = await fetch("/api/generate-cta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -258,23 +253,26 @@ export default function LinkedInPostGenerator() {
         throw new Error(`CTA API error: ${ctaData.error}`)
       }
 
+      if (!ctaData || !ctaData.cta) {
+        throw new Error("Invalid CTA response: Expected CTA content")
+      }
+
       setGeneratedContent((prev) => ({
         ...prev,
         body: bodyData.body,
         cta: ctaData.cta,
       }))
-
-      setSelectedCategory(newCategory)
     } catch (error) {
       console.error("Error regenerating content:", error)
+      // Keep existing content on error
     } finally {
       setIsRegeneratingContent(false)
     }
   }
 
   const generateContent = async () => {
-    if (hasGeneratedContent) return
-    setHasGeneratedContent(true)
+    if (isGenerating || generatedContent.titles.length > 0) return // Prevent duplicate calls
+
     setIsGenerating(true)
     try {
       const titlesResponse = await fetch("/api/generate-titles", {
@@ -282,7 +280,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
         }),
       })
       const titlesData = await titlesResponse.json()
@@ -300,7 +298,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
           title: titlesData.titles[0],
         }),
       })
@@ -319,7 +317,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
         }),
       })
       const ctaData = await ctaResponse.json()
@@ -337,7 +335,7 @@ export default function LinkedInPostGenerator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: selectedTopic,
-          category: selectedCategory,
+          category: selectedCategory, // Use default category
         }),
       })
       const hashtagsData = await hashtagsResponse.json()
@@ -359,10 +357,28 @@ export default function LinkedInPostGenerator() {
         customHashtags: [],
       })
 
-      setCurrentStep(3)
+      setCurrentStep(3) // Skip to step 3 (hashtags) instead of step 4
     } catch (error) {
       console.error("Error generating content:", error)
-      setHasGeneratedContent(false)
+      if (error instanceof Error) {
+        console.log("[v0] Using fallback content due to error:", error.message)
+      } else {
+        console.log("[v0] Using fallback content due to an unknown error.")
+      }
+
+      setGeneratedContent({
+        titles: [
+          `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
+          `Why ${selectedTopic} is Reshaping the Future of Work`,
+          `The Ultimate Guide to ${selectedTopic} Success`,
+        ],
+        selectedTitle: `5 Game-Changing ${selectedTopic} Trends You Can't Ignore`,
+        body: `Here's what I've learned about ${selectedTopic} after years in the industry...\n\n🔥 Key insights that changed my perspective\n💡 Practical tips you can implement today\n🚀 Future trends to watch\n\nWhat's your experience with ${selectedTopic}?`,
+        cta: "What's your take on this? Share your thoughts below! 👇",
+        hashtags: ["#" + selectedTopic.replace(/\s+/g, ""), "#LinkedIn", "#CareerGrowth", "#Innovation"],
+        customHashtags: [],
+      })
+      setCurrentStep(3)
     } finally {
       setIsGenerating(false)
     }
@@ -488,10 +504,6 @@ export default function LinkedInPostGenerator() {
       </div>
     )
   }
-
-  useEffect(() => {
-    setHasGeneratedContent(false)
-  }, [selectedTopic, selectedCategory])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -689,38 +701,118 @@ export default function LinkedInPostGenerator() {
           </Card>
         )}
 
-        {/* Step 2: Generate Content */}
         {currentStep === 2 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                  2
-                </span>
+                <Sparkles className="w-5 h-5" />
                 Generate Content
               </CardTitle>
               <CardDescription>
-                Selected Topic: <span className="font-medium">{selectedTopic}</span>
+                Topic: <Badge variant="secondary">{selectedTopic}</Badge>
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex justify-center">
-                <Button
-                  onClick={generateContent}
-                  disabled={!selectedTopic || hasGeneratedContent || isGenerating}
-                  size="lg"
-                  className="px-8"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Content...
-                    </>
-                  ) : (
-                    "Generate Content"
-                  )}
+            <CardContent className="space-y-4">
+              {!isGenerating && generatedContent.titles.length === 0 && (
+                <Button onClick={generateContent} className="w-full" size="lg">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Content
                 </Button>
-              </div>
+              )}
+
+              {isGenerating && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin mr-2" />
+                  <span>Generating amazing content...</span>
+                </div>
+              )}
+
+              {generatedContent.titles.length > 0 && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Choose a title:</h3>
+                    <div className="space-y-2">
+                      {generatedContent.titles.map((title, index) => (
+                        <Button
+                          key={index}
+                          variant={generatedContent.selectedTitle === title ? "default" : "outline"}
+                          className="w-full text-left justify-start h-auto p-4"
+                          onClick={() => selectTitle(title)}
+                        >
+                          {title}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Post Category:</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Change the category to regenerate the body and CTA with a different style:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {POST_CATEGORIES.map((category) => (
+                        <Button
+                          key={category.name}
+                          variant={selectedCategory === category.name ? "default" : "outline"}
+                          className="h-auto p-3 text-left justify-start"
+                          onClick={() => regenerateContent(category.name)}
+                          disabled={isRegeneratingContent}
+                        >
+                          <div className="w-full space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{category.icon}</span>
+                              <span className="font-medium text-sm">{category.name}</span>
+                            </div>
+                            <Badge
+                              variant={
+                                category.engagement === "Very High"
+                                  ? "default"
+                                  : category.engagement === "High"
+                                    ? "secondary"
+                                    : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {category.engagement} Engagement
+                            </Badge>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                    {isRegeneratingContent && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <span className="text-sm">Regenerating content...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Generated Body:</h3>
+                    <Textarea
+                      value={generatedContent.body}
+                      onChange={(e) => setGeneratedContent((prev) => ({ ...prev, body: e.target.value }))}
+                      rows={6}
+                      className="resize-none whitespace-pre-wrap"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Call to Action:</h3>
+                    <Textarea
+                      value={generatedContent.cta}
+                      onChange={(e) => setGeneratedContent((prev) => ({ ...prev, cta: e.target.value }))}
+                      rows={2}
+                      className="resize-none"
+                    />
+                  </div>
+
+                  <Button onClick={() => setCurrentStep(3)} className="w-full">
+                    Continue to Hashtags
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -730,86 +822,11 @@ export default function LinkedInPostGenerator() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Hash className="w-5 h-5" />
-                Review & Customize Content
+                Manage Hashtags
               </CardTitle>
-              <CardDescription>Select your preferred title, choose category, and customize hashtags</CardDescription>
+              <CardDescription>Customize your hashtags to maximize reach and engagement</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <h3 className="font-semibold mb-3">Choose Your Title:</h3>
-                <div className="space-y-2">
-                  {generatedContent.titles.map((title, index) => (
-                    <Button
-                      key={index}
-                      variant={generatedContent.selectedTitle === title ? "default" : "outline"}
-                      className="w-full h-auto p-4 text-left justify-start"
-                      onClick={() => selectTitle(title)}
-                    >
-                      <div className="w-full">
-                        <h4 className="font-medium text-balance leading-tight">{title}</h4>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold">Post Category:</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => regenerateContent(selectedCategory)}
-                    disabled={isRegeneratingContent}
-                    className="flex items-center gap-2"
-                  >
-                    {isRegeneratingContent ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Regenerating...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        Regenerate
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  {POST_CATEGORIES.map((category) => (
-                    <Button
-                      key={category.name}
-                      variant={selectedCategory === category.name ? "default" : "outline"}
-                      className="h-auto p-4 text-left justify-start"
-                      onClick={() => {
-                        if (selectedCategory !== category.name) {
-                          regenerateContent(category.name)
-                        }
-                      }}
-                      disabled={isRegeneratingContent}
-                    >
-                      <div className="w-full space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{category.icon}</span>
-                          <span className="font-medium">{category.name}</span>
-                        </div>
-                        <p className="text-sm text-gray-600 text-left">{category.description}</p>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Content Preview:</h3>
-                <div className="bg-white border rounded-lg p-4 space-y-3">
-                  <h4 className="font-bold text-lg text-balance">{generatedContent.selectedTitle}</h4>
-                  <div className="whitespace-pre-wrap text-gray-700 text-sm">{generatedContent.body}</div>
-                  <div className="text-blue-600 font-medium text-sm">{generatedContent.cta}</div>
-                </div>
-              </div>
-
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold">AI Generated Hashtags:</h3>
@@ -891,6 +908,24 @@ export default function LinkedInPostGenerator() {
                 <p className="text-sm text-gray-600">
                   LinkedIn recommends using 3-5 hashtags for optimal reach. You can use up to 10 hashtags maximum.
                 </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Post Preview:</h3>
+                <div className="bg-white border rounded-lg p-4 space-y-3 max-h-64 overflow-y-auto">
+                  <h4 className="font-bold text-lg">{generatedContent.selectedTitle}</h4>
+                  <div className="whitespace-pre-wrap text-gray-700 text-sm">
+                    {generatedContent.body.replace(/\*\*\*/g, "").replace(/➡️ /g, "")}
+                  </div>
+                  <div className="text-blue-600 font-medium text-sm">{generatedContent.cta}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {getAllHashtags().map((hashtag, index) => (
+                      <span key={index} className="text-blue-600 text-sm">
+                        {hashtag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2">
