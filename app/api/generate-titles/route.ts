@@ -8,21 +8,22 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
-    const prompt = `Act as a data expert creating a LinkedIn "one-slide wisdom" post. 
-    Your task is to generate 3 highly engaging hooks (titles) for the topic: ${topic}.
-    Your response should be 3 impactful titles (1-2 lines each) that:
-    Are tailored to the category: ${category}.
-    Grab attention by using numbers (e.g., "3 secrets," "5 mistakes").
-    Address the audience directly using "you."  
-    Frame the topic as a problem and agitate it to create curiosity.
-    Are specific, simple, and unique.
-    Example format: [Number] [Topic] Secrets I Wish I Knew Earlier (They Made Me [Outcome]).
-    Return the response as a valid JSON object with this exact format:
-    {
-      "titles": ["Title 1 here...", "Title 2 here...", "Title 3 here..."]
-    }
+    const prompt = `As a data expert creating a LinkedIn 'one-slide wisdom' post in the Category: ${category} , 
+    generate a concise and engaging hook for the Title: ${topic} . Make it 1-2 lines 
+    (5-10 words total), designed to grab attention immediately. Include key elements like a number for precision 
+    (e.g., '5 ways'), directly address the audience using 'you' to make it personal, 
+    state a problem derived from the Topic: ${topic} 
+    problem and agitate it (using the Problem-Agitate-Solution framework), and end with a curiosity trigger. 
+    Base it on the Topic: ${topic} Ensure it's specific, simple, 
+    and unique to appeal to data professionals on LinkedIn, 
+    like: '[Number] [Topic] Secrets I Wish I Knew Earlier (And How They Can Transform Your Workflow).
 
-    Do not include any extra text or markdown formatting like \`\`\`json.`
+Return the response as a valid JSON object with this exact format:
+{
+  "body": "Your body content here..."
+}
+
+Do not include any extra text or markdown formatting like \`\`\`json.`
 
     const result = await model.generateContent(prompt)
     let text = result.response.text()
