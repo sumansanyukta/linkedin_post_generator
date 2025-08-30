@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createGroq } from "@ai-sdk/groq"
-import { generateText } from "ai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export async function POST(request: NextRequest) {
   try {
     const { ctaPrompt } = await request.json()
 
-    const groq = createGroq({ apiKey: process.env.GROQ_API_KEY })
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
     const prompt = `Act as a data expert writing a call-to-action (CTA) for a LinkedIn "one-slide wisdom" post. 
                     Your task is to generate a short, engaging CTA that:
@@ -25,12 +25,8 @@ export async function POST(request: NextRequest) {
                     
                     Do not include any extra text or markdown formatting like \`\`\`json.`
 
-    const result = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
-      prompt: prompt,
-    })
-
-    let text = result.text
+    const result = await model.generateContent(prompt)
+    let text = result.response.text()
 
     console.log("[v0] Raw AI response:", text)
 
