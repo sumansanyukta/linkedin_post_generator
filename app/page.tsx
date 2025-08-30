@@ -59,6 +59,24 @@ const THUMBNAIL_TEMPLATES = [
     description: "Grid pattern background for tech-focused content",
     preview: "bg-slate-800",
   },
+  {
+    id: "warm-cream",
+    name: "Warm Cream",
+    description: "Elegant cream background with dark accents",
+    preview: "bg-[#F9F1E8]",
+  },
+  {
+    id: "olive-gold",
+    name: "Olive Gold",
+    description: "Rich olive tone for professional content",
+    preview: "bg-[#645D1E]",
+  },
+  {
+    id: "dark-brown",
+    name: "Dark Brown",
+    description: "Deep brown for sophisticated look",
+    preview: "bg-[#422B1C]",
+  },
 ]
 
 const POST_CATEGORIES = [
@@ -406,6 +424,12 @@ export default function LinkedInPostGenerator() {
           return "bg-white text-gray-900 border-l-8 border-blue-500"
         case "tech-grid":
           return "bg-slate-800 text-white relative overflow-hidden"
+        case "warm-cream":
+          return "bg-[#F9F1E8] text-[#422B1C] border-2 border-[#645D1E]"
+        case "olive-gold":
+          return "bg-[#645D1E] text-[#F9F1E8]"
+        case "dark-brown":
+          return "bg-[#422B1C] text-[#F9F1E8]"
         default:
           return "bg-gray-100 text-gray-900"
       }
@@ -423,8 +447,10 @@ export default function LinkedInPostGenerator() {
           </div>
         )}
         <div className="text-center z-10">
-          <h3 className="text-lg font-bold mb-2 line-clamp-3">{title || "Your Post Title"}</h3>
-          <div className="text-sm opacity-80">{selectedTopic}</div>
+          <h3 className="text-lg font-bold mb-2 line-clamp-3 font-[family-name:var(--font-outfit)]">
+            {title || "Your Post Title"}
+          </h3>
+          <div className="text-sm opacity-80 font-[family-name:var(--font-outfit)]">{selectedTopic}</div>
         </div>
       </div>
     )
@@ -743,6 +769,23 @@ export default function LinkedInPostGenerator() {
             <CardContent className="space-y-6">
               <div className="space-y-6">
                 <div className="space-y-4">
+                  {selectedThumbnailTemplate && (
+                    <div>
+                      <h3 className="font-semibold mb-3">Generated Thumbnail</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <ThumbnailPreview
+                          template={THUMBNAIL_TEMPLATES.find((t) => t.id === selectedThumbnailTemplate)!}
+                          title={generatedContent.selectedTitle}
+                        />
+                        <div className="mt-3 text-center">
+                          <Badge variant="secondary">
+                            {THUMBNAIL_TEMPLATES.find((t) => t.id === selectedThumbnailTemplate)?.name}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="bg-white border rounded-lg p-6 space-y-4">
                     <h2 className="text-xl font-bold text-balance">{generatedContent.selectedTitle}</h2>
                     <div className="whitespace-pre-wrap text-gray-700 text-pretty">{generatedContent.body}</div>
@@ -773,25 +816,6 @@ export default function LinkedInPostGenerator() {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  {selectedThumbnailTemplate && (
-                    <div>
-                      <h3 className="font-semibold mb-3">Generated Thumbnail</h3>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <ThumbnailPreview
-                          template={THUMBNAIL_TEMPLATES.find((t) => t.id === selectedThumbnailTemplate)!}
-                          title={generatedContent.selectedTitle}
-                        />
-                        <div className="mt-3 text-center">
-                          <Badge variant="secondary">
-                            {THUMBNAIL_TEMPLATES.find((t) => t.id === selectedThumbnailTemplate)?.name}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 className="font-semibold text-green-900 mb-3">Generation Summary</h3>
